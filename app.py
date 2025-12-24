@@ -3,18 +3,20 @@ import json
 import os
 import shutil
 
-from utils import inflect_with_num
 from parser import *
 from cards import *
 
 
 def main(page: ft.Page):
-    page.window_width = 430
-    page.window_height = 900
+    page.window_width = 432
+    page.window_height = 768
     page.window_resizable = False
+    page.window_maximizable = False
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.theme_mode = ft.ThemeMode.LIGHT
+    page.padding = 0
+    page.spacing = 0
 
     os.makedirs("output", exist_ok=True)
 
@@ -38,29 +40,23 @@ def main(page: ft.Page):
     export_picker = ft.FilePicker(on_result=on_export_result)
     page.overlay.append(export_picker)
 
-
     def build_image():
         return ft.Image(
             src=images[index],
-            width=360,
-            height=450,
-            fit=ft.ImageFit.CONTAIN,
+            fit=ft.ImageFit.COVER,
+            width=page.window_width + 16,
+            height=page.window_height + 16,
         )
 
     switcher = ft.AnimatedSwitcher(
-        content=ft.Container(),
+        content=ft.Container(expand=True),
         transition=ft.AnimatedSwitcherTransition.FADE,
         duration=300,
+        expand=True,
     )
-
-    dots = ft.Row(width=140, alignment=ft.MainAxisAlignment.CENTER)
 
     def update():
         switcher.content = build_image()
-        dots.controls = [
-            ft.Text("●" if i == index else "○", size=16)
-            for i in range(len(images))
-        ]
         page.update()
 
     def prev_card(e=None):
@@ -104,13 +100,6 @@ def main(page: ft.Page):
         page.dialog.open = False
         page.update()
 
-    gesture = ft.GestureDetector(
-        content=switcher,
-        on_pan_update=on_pan_update,
-        on_pan_end=on_pan_end,
-        on_double_tap=on_double_tap,
-    )
-
     def export_all(e):
         export_picker.get_directory_path(
             dialog_title="Выбери папку для экспорта карточек"
@@ -125,12 +114,16 @@ def main(page: ft.Page):
 
         if len(stats_cache["top_users"]) > 1:
             images.append(card_users(stats_cache))
+        if stats_cache["photos"] > 0:
+            images.append(card_photos(stats_cache))
+        if stats_cache["videos"] > 0:
+            images.append(card_videos(stats_cache))
+        if stats_cache["stickers"] > 0:
+            images.append(card_stickers(stats_cache))
+        if stats_cache["audio"] > 0:
+            images.append(card_audio(stats_cache))
 
-        images += [
-            card_photos(stats_cache),
-            card_active_day(stats_cache),
-            card_bad(stats_cache)
-        ]
+        images += [card_active_day(stats_cache), card_bad(stats_cache)]
 
         if stats_cache.get("bad_day"):
             images.append(card_bad_day(stats_cache))
@@ -146,15 +139,15 @@ def main(page: ft.Page):
     welcome = ft.Column(
         [
             ft.Icon(ft.icons.AUTO_AWESOME, size=72),
-            ft.Text("Telegram Итоги Года", size=30, weight=ft.FontWeight.BOLD),
+            ft.Text("#TG-RECAP", size=30, weight=ft.FontWeight.BOLD),
             ft.Text(
-                "Загрузи экспорт чата и получи красивые карточки",
+                "Узнай, как ты провел этот год в Telegram!",
                 color=ft.colors.GREY,
             ),
             ft.Text(
                 "1. Экспортируй чат из Telegram за последний год\n"
                 "2. Выбери result.json\n"
-                "3. Листай и сохраняй карточки",
+                "3. Листай и делись карточками в Stories!",
                 text_align=ft.TextAlign.CENTER,
             ),
             ft.ElevatedButton(
@@ -169,24 +162,44 @@ def main(page: ft.Page):
         spacing=16,
     )
 
-    cards_view = ft.Column(
-        [
-            gesture,
-            dots,
-            ft.Row(
-                [
-                    ft.IconButton(ft.icons.ARROW_BACK, on_click=prev_card),
-                    ft.IconButton(ft.icons.SAVE, on_click=export_all),
-                    ft.IconButton(ft.icons.ARROW_FORWARD, on_click=next_card),
-                ],
-                alignment=ft.MainAxisAlignment.CENTER,
-            ),
-        ],
-        alignment=ft.MainAxisAlignment.CENTER,
-        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+    cards_view = ft.GestureDetector(
+        on_pan_update=on_pan_update,
+        on_pan_end=on_pan_end,
+        on_double_tap=on_double_tap,
         expand=True,
+        content=ft.Stack(
+            [
+                switcher,
+                ft.Container(
+                    content=ft.Row(
+                        [
+                            ft.IconButton(
+                                ft.icons.ARROW_BACK,
+                                icon_color=ft.colors.WHITE70,
+                                on_click=prev_card,
+                            ),
+                            ft.IconButton(
+                                ft.icons.SAVE,
+                                icon_color=ft.colors.WHITE70,
+                                on_click=export_all,
+                            ),
+                            ft.IconButton(
+                                ft.icons.ARROW_FORWARD,
+                                icon_color=ft.colors.WHITE70,
+                                on_click=next_card,
+                            ),
+                        ],
+                        alignment=ft.MainAxisAlignment.CENTER,
+                    ),
+                    alignment=ft.alignment.bottom_center,
+                    padding=ft.padding.only(bottom=24),
+                ),
+            ],
+            expand=True,
+        ),
     )
 
     page.add(welcome)
+
 
 ft.app(target=main)

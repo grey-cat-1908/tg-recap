@@ -1,72 +1,329 @@
+from dataclasses import dataclass
+from typing import Tuple
+
 from PIL import Image, ImageDraw, ImageFont
 
 from utils import inflect_with_num
 
-WIDTH, HEIGHT = 1080, 1350
-BLACK = (20, 20, 20)
-GRAY = (120, 120, 120)
-
+WIDTH, HEIGHT = 1080, 1920
 FONT_BOLD = "assets/Inter-Bold.ttf"
 FONT_REG = "assets/Inter-Regular.ttf"
+
+
+@dataclass
+class Text:
+    font: ImageFont.ImageFont
+    position: int
+    fill: Tuple[int]
+    value: str
+
 
 def base_card(bg):
     img = Image.open(bg).resize((WIDTH, HEIGHT))
     return img, ImageDraw.Draw(img)
 
-def draw_title(d, title):
-    font = ImageFont.truetype(FONT_BOLD, 80)
-    d.text((WIDTH // 2, 200), title, font=font, fill=BLACK, anchor="mm")
 
-def draw_big(d, value, label):
-    big = ImageFont.truetype(FONT_BOLD, 188)
-    reg = ImageFont.truetype(FONT_REG, 60)
-    d.text((WIDTH // 2, 580), value, font=big, fill=BLACK, anchor="mm")
-    d.text((WIDTH // 2, 740), label, font=reg, fill=GRAY, anchor="mm")
+def draw(d, text):
+    d.text(
+        (WIDTH // 2, text.position),
+        text.value,
+        font=text.font,
+        fill=text.fill,
+        anchor="mm",
+    )
+
 
 def save(img, name):
     path = f"output/{name}.png"
     img.save(path)
     return path
 
+
 def card_active_day(s):
     img, d = base_card("assets/bg_day.png")
-    draw_title(d, "Самый активный день")
 
     day, count = s["active_day"]
-    draw_big(d, day, f"Отправлено {count} {inflect_with_num(count, ['сообщение', 'сообщений', 'сообщения'])}")
+
+    draw(
+        d,
+        Text(
+            font=ImageFont.truetype(FONT_BOLD, 150),
+            position=800,
+            fill=(255, 64, 230),
+            value=day,
+        ),
+    )
+    draw(
+        d,
+        Text(
+            font=ImageFont.truetype(FONT_REG, 50),
+            position=1000,
+            fill=(224, 224, 224),
+            value=f"В этот день было отправлено",
+        ),
+    )
+    draw(
+        d,
+        Text(
+            font=ImageFont.truetype(FONT_REG, 50),
+            position=1060,
+            fill=(224, 224, 224),
+            value=f"{count:,} {inflect_with_num(count, ['сообщение', 'сообщений', 'сообщения'])}",
+        ),
+    )
 
     return save(img, "active_day")
 
+
 def card_bad_day(s):
     img, d = base_card("assets/bg_bad_day.png")
-    draw_title(d, "Самый токсичный день")
 
     day, count = s["bad_day"]
-    cmp1 = inflect_with_num(count, ['нецензурное', 'нецензурных', 'нецензурных'])
-    draw_big(d, day, f"{count} {cmp1} {inflect_with_num(count, ['слово', 'слов', 'слова'])}")
+
+    draw(
+        d,
+        Text(
+            font=ImageFont.truetype(FONT_BOLD, 150),
+            position=800,
+            fill=(255, 64, 230),
+            value=day,
+        ),
+    )
+    draw(
+        d,
+        Text(
+            font=ImageFont.truetype(FONT_REG, 50),
+            position=1000,
+            fill=(224, 224, 224),
+            value=f"В этот день было использовано",
+        ),
+    )
+    draw(
+        d,
+        Text(
+            font=ImageFont.truetype(FONT_REG, 50),
+            position=1060,
+            fill=(224, 224, 224),
+            value=f"{count:,} {inflect_with_num(count, ['нецензурное', 'нецензурных', 'нецензурных'])} {inflect_with_num(count, ['слово', 'слов', 'слова'])}",
+        ),
+    )
 
     return save(img, "bad_day")
 
+
 def card_messages(s):
     img, d = base_card("assets/bg_messages.png")
-    draw_big(d, f"{s['messages']}", f"{inflect_with_num(s['messages'], ['сообщение', 'сообщений', 'сообщения'])} за год отправлено")
+    draw(
+        d,
+        Text(
+            font=ImageFont.truetype(FONT_BOLD, 150),
+            position=800,
+            fill=(255, 64, 230),
+            value=f"{s['messages']:,}".replace(",", " "),
+        ),
+    )
+    draw(
+        d,
+        Text(
+            font=ImageFont.truetype(FONT_BOLD, 80),
+            position=980,
+            fill=(224, 224, 224),
+            value=inflect_with_num(
+                s["messages"], ["сообщение", "сообщений", "сообщения"]
+            ),
+        ),
+    )
+    draw(
+        d,
+        Text(
+            font=ImageFont.truetype(FONT_REG, 50),
+            position=1105,
+            fill=(224, 224, 224),
+            value="было отправлено за год",
+        ),
+    )
     return save(img, "messages")
+
 
 def card_photos(s):
     img, d = base_card("assets/bg_photos.png")
-    draw_big(d, str(s["photos"]), f"{inflect_with_num(s['photos'], ['фотография', 'фотографий', 'фотографии'])} отправлено")
+    draw(
+        d,
+        Text(
+            font=ImageFont.truetype(FONT_BOLD, 150),
+            position=800,
+            fill=(255, 64, 230),
+            value=f"{s['photos']:,}".replace(",", " "),
+        ),
+    )
+    draw(
+        d,
+        Text(
+            font=ImageFont.truetype(FONT_BOLD, 80),
+            position=980,
+            fill=(224, 224, 224),
+            value=inflect_with_num(
+                s["photos"], ["фотография", "фотографий", "фотографии"]
+            ),
+        ),
+    )
+    draw(
+        d,
+        Text(
+            font=ImageFont.truetype(FONT_REG, 50),
+            position=1105,
+            fill=(224, 224, 224),
+            value=f"{inflect_with_num(s['photos'], ['была', 'было', 'было'])} {inflect_with_num(s['photos'], ['отправлена', 'отправлено', 'отправлено'])} за год",
+        ),
+    )
     return save(img, "photos")
+
+
+def card_videos(s):
+    img, d = base_card("assets/bg_videos.png")
+    draw(
+        d,
+        Text(
+            font=ImageFont.truetype(FONT_BOLD, 150),
+            position=800,
+            fill=(255, 64, 230),
+            value=f"{s['videos']:,}".replace(",", " "),
+        ),
+    )
+    draw(
+        d,
+        Text(
+            font=ImageFont.truetype(FONT_BOLD, 80),
+            position=980,
+            fill=(224, 224, 224),
+            value=inflect_with_num(
+                s["videos"], ["видеофайл", "видеофайлов", "видеофайла"]
+            ),
+        ),
+    )
+    draw(
+        d,
+        Text(
+            font=ImageFont.truetype(FONT_REG, 50),
+            position=1105,
+            fill=(224, 224, 224),
+            value=f"{inflect_with_num(s['videos'], ['был', 'было', 'было'])} {inflect_with_num(s['videos'], ['отправлен', 'отправлено', 'отправлено'])} за год",
+        ),
+    )
+    return save(img, "videos")
+
+
+def card_stickers(s):
+    img, d = base_card("assets/bg_stickers.png")
+    draw(
+        d,
+        Text(
+            font=ImageFont.truetype(FONT_BOLD, 150),
+            position=800,
+            fill=(255, 64, 230),
+            value=f"{s['stickers']:,}".replace(",", " "),
+        ),
+    )
+    draw(
+        d,
+        Text(
+            font=ImageFont.truetype(FONT_BOLD, 80),
+            position=980,
+            fill=(224, 224, 224),
+            value=inflect_with_num(s["stickers"], ["стикер", "стикеров", "стикера"]),
+        ),
+    )
+    draw(
+        d,
+        Text(
+            font=ImageFont.truetype(FONT_REG, 50),
+            position=1105,
+            fill=(224, 224, 224),
+            value=f"{inflect_with_num(s['stickers'], ['был', 'было', 'было'])} {inflect_with_num(s['stickers'], ['отправлен', 'отправлено', 'отправлено'])} за год",
+        ),
+    )
+    return save(img, "stickers")
+
+
+def card_audio(s):
+    img, d = base_card("assets/bg_audio.png")
+    draw(
+        d,
+        Text(
+            font=ImageFont.truetype(FONT_BOLD, 150),
+            position=800,
+            fill=(255, 64, 230),
+            value=f"{s['audio']:,}".replace(",", " "),
+        ),
+    )
+    draw(
+        d,
+        Text(
+            font=ImageFont.truetype(FONT_BOLD, 80),
+            position=980,
+            fill=(224, 224, 224),
+            value=inflect_with_num(
+                s["audio"], ["аудиофайл", "аудиофайлов", "аудиофайла"]
+            ),
+        ),
+    )
+    draw(
+        d,
+        Text(
+            font=ImageFont.truetype(FONT_REG, 50),
+            position=1105,
+            fill=(224, 224, 224),
+            value=f"{inflect_with_num(s['audio'], ['был', 'было', 'было'])} {inflect_with_num(s['audio'], ['отправлен', 'отправлено', 'отправлено'])} за год",
+        ),
+    )
+    return save(img, "audio")
+
 
 def card_users(s):
     img, d = base_card("assets/bg_top_users.png")
-    f = ImageFont.truetype(FONT_REG, 60)
-    y = 420
-    for i, (u, c) in enumerate(s["top_users"], 1):
-        d.text((WIDTH // 2, y), f"{i}. {u[:22]} — {c}", font=f, fill=BLACK, anchor="mm")
+    y = 930 - 60 * (len(s["top_users"]) - 1)
+    for _, (u, c) in enumerate(s["top_users"], 1):
+        display_name = (u[: 2 - 3] + "…") if len(u) > 22 else u
+        draw(
+            d,
+            Text(
+                font=ImageFont.truetype(FONT_BOLD, 60),
+                position=y,
+                fill=(224, 224, 224),
+                value=f"{display_name} — {c}",
+            ),
+        )
         y += 120
     return save(img, "users")
 
+
 def card_bad(s):
     img, d = base_card("assets/bg_bad_words.png")
-    draw_big(d, str(s["bad_words"]), f"нецензурных {inflect_with_num(s['bad_words'], ['слово', 'слов', 'слова'])} использовано")
+    draw(
+        d,
+        Text(
+            font=ImageFont.truetype(FONT_BOLD, 150),
+            position=800,
+            fill=(255, 64, 230),
+            value=f"{s['bad_words']:,}".replace(",", " "),
+        ),
+    )
+    draw(
+        d,
+        Text(
+            font=ImageFont.truetype(FONT_BOLD, 80),
+            position=980,
+            fill=(224, 224, 224),
+            value=f"{inflect_with_num(s['bad_words'], ['нецензурное', 'нецензурных', 'нецензурных'])} {inflect_with_num(s['bad_words'], ['слово', 'слова', 'слов'])}",
+        ),
+    )
+    draw(
+        d,
+        Text(
+            font=ImageFont.truetype(FONT_REG, 50),
+            position=1105,
+            fill=(224, 224, 224),
+            value="было использовано за год",
+        ),
+    )
     return save(img, "bad")
