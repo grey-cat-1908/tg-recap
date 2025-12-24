@@ -11,7 +11,7 @@ from PIL import Image, ImageDraw, ImageFont
 from utils import inflect_with_num, resource_path
 
 WIDTH, HEIGHT = 1080, 1920
-FONT_NUM = resource_path("assets/Inter-Bold.ttf")
+FONT_NUM = resource_path("assets/KorinnablackcttBolditalic.ttf")
 FONT_REG = resource_path("assets/ArialBlackPrimer.ttf")
 
 temp_dir = tempfile.gettempdir()
@@ -56,7 +56,7 @@ def card_active_day(s):
     draw(
         d,
         Text(
-            font=ImageFont.truetype(FONT_NUM, 150),
+            font=ImageFont.truetype(FONT_NUM, 130),
             position=840,
             fill=(37, 179, 255),
             value=day,
@@ -92,7 +92,7 @@ def card_bad_day(s):
     draw(
         d,
         Text(
-            font=ImageFont.truetype(FONT_NUM, 150),
+            font=ImageFont.truetype(FONT_NUM, 130),
             position=840,
             fill=(191, 64, 255),
             value=day,
